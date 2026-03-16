@@ -4,8 +4,8 @@ pipeline {
         REPO_PATH = credentials('repo_path')
         APP_NAME = 'binarycalculatorwebapp'
         IMAGE_TAG = "${REPO_PATH}/${APP_NAME}"
-        CLUSTER = credentials('cluster_name')
-        CLUSTER_ZONE = credentials('cluster_zone')
+        CLUSTER = 'sofe3980u'
+        CLUSTER_ZONE = 'us-central1-a'
     }
 
     agent {
@@ -52,12 +52,7 @@ spec:
                 sh '''
                     gcloud config set project "$PROJECT"
                     gcloud auth list
-                    gcloud builds submit \
-                      --tag "$IMAGE_TAG" \
-                      --service-account="projects/$PROJECT/serviceAccounts/jenkins-sa@$PROJECT.iam.gserviceaccount.com" \
-                      --gcs-log-dir="gs://$PROJECT-cloudbuild-logs" \
-                      --suppress-logs
-                '''
+                    gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE" --project "$PROJECT"
             }
         }
     }

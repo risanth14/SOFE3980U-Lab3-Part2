@@ -52,7 +52,7 @@ spec:
                         sh '''
                             gcloud config set project "$PROJECT"
                             gcloud auth list
-                            gcloud builds submit --tag "$IMAGE_TAG" --suppress-logs
+                            gcloud builds submit --tag "$IMAGE_TAG" --service-account="projects/$PROJECT/serviceAccounts/jenkins-sa@$PROJECT.iam.gserviceaccount.com" --suppress-logs
                         '''
                     }
                 }

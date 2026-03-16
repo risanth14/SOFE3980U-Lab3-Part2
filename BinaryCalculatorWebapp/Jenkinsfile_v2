@@ -52,7 +52,7 @@ spec:
                         sh '''
                             gcloud config set project "$PROJECT"
                             gcloud auth list
-                            gcloud builds submit -t "$IMAGE_TAG" --suppress-logs
+                            gcloud builds submit --tag "$IMAGE_TAG" --suppress-logs
                         '''
                     }
                 }
@@ -66,15 +66,10 @@ spec:
                         sh '''
                             gcloud config set project "$PROJECT"
                             gcloud auth list
-                            gcloud container clusters get-credentials "$CLUSTER" --zone="$CLUSTER_ZONE"
+                            gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE"
+                            kubectl delete deployment binarycalculator-deployment --ignore-not-found=true
+                            kubectl create deployment binarycalculator-deployment --image=$IMAGE_TAG --port=8080
                         '''
-                        script {
-                            try {
-                                sh 'kubectl delete deployment binarycalculator-deployment'
-                            } catch (Exception e) {
-                            }
-                        }
-                        sh 'kubectl create deployment binarycalculator-deployment --image "$IMAGE_TAG" --port=8080'
                     }
                 }
             }
@@ -87,15 +82,12 @@ spec:
                         sh '''
                             gcloud config set project "$PROJECT"
                             gcloud auth list
-                            gcloud container clusters get-credentials "$CLUSTER" --zone="$CLUSTER_ZONE"
+                            gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE"
+                            kubectl delete service binarycalculator-service --ignore-not-found=true
+                            kubectl expose deployment binarycalculator-deployment --type=LoadBalancer --name=binarycalculator-service --port=8080 --target-port=8080
+                            sleep 20
+                            kubectl get service binarycalculator-service -o wide
                         '''
-                        script {
-                            try {
-                                sh 'kubectl expose deployment binarycalculator-deployment --type=LoadBalancer --name=binarycalculator-service'
-                            } catch (Exception e) {
-                            }
-                        }
-                        sh "kubectl get service/binarycalculator-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
                     }
                 }
             }

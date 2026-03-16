@@ -45,19 +45,23 @@ spec:
             }
         }
 
-        stage('containerize') {
-            steps {
-                container('gcloud') {
-                    dir('BinaryCalculatorWebapp') {
-                        sh '''
-                            gcloud config set project "$PROJECT"
-                            gcloud auth list
-                            gcloud builds submit --tag "$IMAGE_TAG" --service-account="projects/$PROJECT/serviceAccounts/jenkins-sa@$PROJECT.iam.gserviceaccount.com" --suppress-logs
-                        '''
-                    }
-                }
+      stage('containerize') {
+    steps {
+        container('gcloud') {
+            dir('BinaryCalculatorWebapp') {
+                sh '''
+                    gcloud config set project "$PROJECT"
+                    gcloud auth list
+                    gcloud builds submit \
+                      --tag "$IMAGE_TAG" \
+                      --service-account="projects/$PROJECT/serviceAccounts/jenkins-sa@$PROJECT.iam.gserviceaccount.com" \
+                      --gcs-log-dir="gs://$PROJECT-cloudbuild-logs" \
+                      --suppress-logs
+                '''
             }
         }
+    }
+}
 
         stage('deployment') {
             steps {

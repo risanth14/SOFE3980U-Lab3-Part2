@@ -45,18 +45,23 @@ spec:
             }
         }
 
-      stage('containerize') {
-    steps {
-        container('gcloud') {
-            dir('BinaryCalculatorWebapp') {
-                sh '''
-                    gcloud config set project "$PROJECT"
-                    gcloud auth list
-                    gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE" --project "$PROJECT"
+        stage('containerize') {
+            steps {
+                container('gcloud') {
+                    dir('BinaryCalculatorWebapp') {
+                        sh '''
+                            gcloud config set project "$PROJECT"
+                            gcloud auth list
+                            gcloud builds submit \
+                              --tag "$IMAGE_TAG" \
+                              --service-account="projects/$PROJECT/serviceAccounts/jenkins-sa@$PROJECT.iam.gserviceaccount.com" \
+                              --gcs-log-dir="gs://$PROJECT-cloudbuild-logs" \
+                              --suppress-logs
+                        '''
+                    }
+                }
             }
         }
-    }
-}
 
         stage('deployment') {
             steps {
@@ -65,9 +70,9 @@ spec:
                         sh '''
                             gcloud config set project "$PROJECT"
                             gcloud auth list
-                            gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE"
+                            gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE" --project "$PROJECT"
                             kubectl delete deployment binarycalculator-deployment --ignore-not-found=true
-                            kubectl create deployment binarycalculator-deployment --image=$IMAGE_TAG --port=8080
+                            kubectl create deployment binarycalculator-deployment --image="$IMAGE_TAG" --port=8080
                         '''
                     }
                 }
@@ -81,7 +86,7 @@ spec:
                         sh '''
                             gcloud config set project "$PROJECT"
                             gcloud auth list
-                            gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE"
+                            gcloud container clusters get-credentials "$CLUSTER" --zone "$CLUSTER_ZONE" --project "$PROJECT"
                             kubectl delete service binarycalculator-service --ignore-not-found=true
                             kubectl expose deployment binarycalculator-deployment --type=LoadBalancer --name=binarycalculator-service --port=8080 --target-port=8080
                             sleep 20
